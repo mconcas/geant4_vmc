@@ -110,7 +110,7 @@ void TG4SteppingAction::ProcessTrackIfLooping(const G4Step* step)
 
     // print looping info
     if (fLoopVerboseLevel > 0) {
-      G4cout << "*** Particle reached max step number (" << fMaxNofSteps
+      G4cout << "*** Particle has reached max step number (" << fMaxNofSteps
              << "). ***" << G4endl;
       if (fStandardVerboseLevel == 0) PrintTrackInfo(track);
     }
@@ -157,10 +157,11 @@ void TG4SteppingAction::ProcessTrackIfBelowCut(const G4Step* step)
   /// is below user cut (PPCUTM)
 
   if (step->GetSecondaryInCurrentStep()->size() == 2 &&
-      ((*step->GetSecondaryInCurrentStep())[0]->GetCreatorProcess()->GetProcessName() ==
-        "muPairProd")) {
-             // Process sub type fPairProdByCharged does distinguish the creator
-             // particle type
+      ((*step->GetSecondaryInCurrentStep())[0]
+          ->GetCreatorProcess()
+          ->GetProcessName() == "muPairProd")) {
+    // Process sub type fPairProdByCharged does distinguish the creator
+    // particle type
 
     G4double minEtotPair =
       fStepManager->GetCurrentLimits()->GetCutVector()->GetMinEtotPair();
@@ -189,7 +190,10 @@ void TG4SteppingAction::ProcessTrackOnBoundary(const G4Step* step)
   // if crossing geometry border
   // (this ensures compatibility with G3 that
   // makes boundary step of zero length)
-  if (step->GetTrack()->GetNextVolume() != 0) {
+  auto nv = step->GetTrack()->GetNextVolume();
+  if (nv != 0) {
+    G4cout << "Processing track on boundary: next volume exists: " << nv
+           << G4endl;
 
     // set back max step limit if it has been modified on fly by user
     G4UserLimits* modifiedLimits = fStepManager->GetLimitsModifiedOnFly();
@@ -289,14 +293,16 @@ void TG4SteppingAction::ProcessTrackIfGeneralProcess(const G4Step* step)
   /// G4GammaGeneralProcess or G4HepEm, etc.
 
   auto gammaGeneral = G4EmParameters::Instance()->GeneralProcessActive();
-  auto neutronGeneral = G4HadronicParameters::Instance()->EnableNeutronGeneralProcess();
+  auto neutronGeneral =
+    G4HadronicParameters::Instance()->EnableNeutronGeneralProcess();
 
-  if ((! gammaGeneral) && (! neutronGeneral)) return;
+  if ((!gammaGeneral) && (!neutronGeneral)) return;
 
   auto particle = step->GetTrack()->GetParticleDefinition();
   auto nofSecondaries = step->GetNumberOfSecondariesInCurrentStep();
-  if (((particle==G4Gamma::GammaDefinition() && gammaGeneral) ||
-       (particle==G4Neutron::NeutronDefinition() && neutronGeneral)) && nofSecondaries>0) {
+  if (((particle == G4Gamma::GammaDefinition() && gammaGeneral) ||
+        (particle == G4Neutron::NeutronDefinition() && neutronGeneral)) &&
+      nofSecondaries > 0) {
     // Get the pointer to the process that limited the step: i.e. the one that
     // created the secondaries of the current step
     const G4VProcess* limiterProcess =
@@ -304,10 +310,11 @@ void TG4SteppingAction::ProcessTrackIfGeneralProcess(const G4Step* step)
     // note: this is a vector of secondaries containing all secondaries created
     // along the tracking of the current `primary` track (i.e. not only
     // secondaries created in this step)
-    auto secondaries  = step->GetSecondary();
-    auto nofAllSecondaries = secondaries ->size();
-    for (auto it = nofAllSecondaries - nofSecondaries; it < nofAllSecondaries; ++it) {
-      auto secTrack = (*secondaries )[it];
+    auto secondaries = step->GetSecondary();
+    auto nofAllSecondaries = secondaries->size();
+    for (auto it = nofAllSecondaries - nofSecondaries; it < nofAllSecondaries;
+         ++it) {
+      auto secTrack = (*secondaries)[it];
       if (secTrack->GetCreatorProcess() != limiterProcess) {
         secTrack->SetCreatorProcess(limiterProcess);
       }
@@ -334,8 +341,8 @@ void TG4SteppingAction::UserSteppingAction(const G4Step* step)
   /// This method should not be overridden in a Geant4 VMC user class;
   /// there is defined SteppingAction(const G4Step* step) method
   /// for this purpose.
-
-  // Fix creator process for secondaries if using gamma or neutron general process
+  // Fix creator process for secondaries if using gamma or neutron general
+  // process
   ProcessTrackIfGeneralProcess(step);
 
   // stop track if maximum number of steps has been reached
@@ -385,9 +392,11 @@ void TG4SteppingAction::UserSteppingAction(const G4Step* step)
 
   // call stepping action of derived class
   SteppingAction(step);
+  G4cout << "After Stepping action" << G4endl;
 
   // actions on the boundary
   if (step->GetPostStepPoint()->GetStepStatus() == fGeomBoundary) {
+    G4cout << "Processing track on boundary" << G4endl;
     ProcessTrackOnBoundary(step);
   }
 
@@ -397,8 +406,8 @@ void TG4SteppingAction::UserSteppingAction(const G4Step* step)
       step->GetTrack()->GetTrackStatus() != fSuspend &&
       fStackPopper->HasPoppedTracks()) {
 
-    // G4cout << "!!! Modifying track status to get processed user tracks."
-    //       << G4endl;
+    G4cout << "!!! Modifying track status to get processed user tracks."
+           << G4endl;
     fStackPopper->SetDoExclusiveStep(step->GetTrack()->GetTrackStatus());
     G4Track* track = const_cast<G4Track*>(step->GetTrack());
     // track->SetTrackStatus(fStopButAlive);

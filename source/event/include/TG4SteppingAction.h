@@ -153,6 +153,7 @@ inline void TG4SteppingAction::SteppingAction(const G4Step* /*step*/)
 {
   /// Dummy stepping action that can be overriden
   /// in a user defined class
+  G4cout << "TG4SteppingAction::SteppingAction" << G4endl;
 }
 
 inline void TG4SteppingAction::SetLoopVerboseLevel(G4int level)

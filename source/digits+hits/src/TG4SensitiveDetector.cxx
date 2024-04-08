@@ -65,10 +65,12 @@ void TG4SensitiveDetector::UserProcessHits()
   /// Call user SD and/or VMC application stepping function.
 
   if (fUserSD) {
+    G4cout << "SD: TG4SensitiveDetector::UserProcessHits Stepping()" << G4endl;
     fUserSD->ProcessHits();
   }
 
   if (fMCApplication) {
+    G4cout << "MCA: TG4SensitiveDetector::UserProcessHits Stepping()" << G4endl;
     fMCApplication->Stepping();
   }
 }
@@ -96,6 +98,7 @@ G4bool TG4SensitiveDetector::ProcessHitsOnBoundary(G4Step* step)
   /// when crossing a geometrical boundary.
 
   // let user sensitive detector process boundary step
+  G4cout << "TG4SensitiveDetector::ProcessHitsOnBoundary" << G4endl;
   fStepManager->SetStep(step, kBoundary);
   UserProcessHits();
 
